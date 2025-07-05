@@ -1,0 +1,83 @@
+server:
+  port: 8090
+spring:
+  profiles:
+    active: "qa"
+  application:
+    name: "loans"
+#  datasource:
+#    url: jdbc:mysql://localhost:3308/loansdb
+#    username: root
+#    password: root
+#  jpa:
+#    show-sql: true
+#  sql:
+#    init:
+#      mode: always
+  config:
+    import: optional:configserver:http://configserver:8071/
+    fast-fail: true
+    retry:
+      max-attempts: 6
+      initial-interval: 2000
+      multiplier: 1.5
+      max-interval: 10000
+
+  datasource:
+    url: jdbc:h2:mem:accountsdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    h2:
+      console:
+        enabled: true
+        path: /h2-console
+    jpa:
+      hibernate:
+        ddl-auto: update
+      database-platform: org.hibernate.dialect.H2Dialect
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
+
+# configuration for actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  security:
+    enabled: false
+  info:
+    env:
+      enabled: true
+  endpoint:
+    shutdown:
+      enabled: true
+# exposing shutdown endpoint from management
+endpoints:
+  shutdown:
+    enabled: true
+
+# configuration for eureka
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    fetchRegistry: true
+    registerWithEureka: true
+    service-url:
+      defaultZone: http://localhost:8070/eureka/
+
+# information of account service to display in dashboard of eureka server
+info:
+  app:
+    name: "cards"
+    description: "Cards MicroService"
+    version: "1.0"
+
+logging:
+  level:
+    org.springframework.boot.context.config: DEBUG

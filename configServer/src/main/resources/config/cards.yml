@@ -1,0 +1,10 @@
+build:
+  version: "1.0"
+accounts:
+  message: "Welcome to Dev Cards MicroService"
+  contactDetails:
+    name: "Yous yoeun"
+    email: "yous@yoeun.com"
+  onCallSupport:
+    - (855) 123-4567
+    - (855) 123-4568

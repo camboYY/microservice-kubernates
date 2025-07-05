@@ -1,0 +1,132 @@
+services:
+  accountsdb:
+    container_name: accountsdb
+    environment:
+      MYSQL_DATABASE: accountsdb
+    extends:
+      file: common-config.yml
+      service: microservice-db-config
+  cardsdb:
+    container_name: cardsdb
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_DATABASE: cardsdb
+    extends:
+      file: common-config.yml
+      service: microservice-db-config
+  laonsdb:
+    container_name: laonsdb
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_DATABASE: laonsdb
+    extends:
+      file: common-config.yml
+      service: microservice-db-config
+
+  #  rabbitmq:
+  #    image: rabbitmq:3-management
+  #    container_name: rabbitmq
+  #    ports:
+  #      - "5672:5672"
+  #      - "15672:15672"
+  #    healthcheck:
+  #      test: rabbitmq-diagnostics check_port_connectivity
+  #      interval: 10s
+  #      timeout: 5s
+  #      retries: 10
+  #      start_period: 10s
+  #    extends:
+  #      file: common-config.yml
+  #      service: network-deploy-service
+
+  configserver:
+    image: "yousdocker/configserver:s7"
+    container_name: configserver-ms
+    ports:
+      - "8071:8071"
+    #    depends_on:
+    #      rabbitmq:
+    #        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8071/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  eurekaserver:
+    image: "yousdocker/eurekaserver:s7"
+    container_name: eurekaserver-ms
+    ports:
+      - "8070:8070"
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: eurekaserver # name of this microservice must be the same as yaml file name in gitHub repo
+    #    depends_on:
+    #      rabbitmq:
+    #        condition: service_healthy
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8070/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  accounts:
+    image: "yousdocker/accounts:s7"
+    container_name: accounts-ms
+    ports:
+      - "8080:8080"
+    depends_on:
+      accountsdb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: accounts
+      SPRING_DATASOURCE_URL: jdbc:mysql://accountsdb:3306/accountsdb
+    extends:
+      file: common-config.yml
+      service: microservice-configserver-config
+
+  loans:
+    image: "yousdocker/loans:s7"
+    container_name: loans-ms
+    ports:
+      - "8090:8090"
+    depends_on:
+      laonsdb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: loans
+      SPRING_DATASOURCE_URL: jdbc:mysql://laonsdb:3306/laonsdb
+    extends:
+      file: common-config.yml
+      service: microservice-configserver-config
+
+  cards:
+    image: "yousdocker/cards:s7"
+    container_name: cards-ms
+    ports:
+      - "9000:9000"
+    depends_on:
+      cardsdb:
+        condition: service_healthy
+    environment:
+      SPRING_APPLICATION_NAME: cards
+      SPRING_DATASOURCE_URL: jdbc:mysql://cardsdb:3306/cardsdb
+    extends:
+      file: common-config.yml
+      service: microservice-configserver-config
+
+networks:
+  easybank:
+    driver: "bridge"
