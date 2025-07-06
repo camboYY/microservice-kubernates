@@ -1,4 +1,4 @@
-iserver:
+server:
   port: 8071
 spring:
   application:
